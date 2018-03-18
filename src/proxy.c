@@ -5,12 +5,13 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#include <resolv.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include <netinet/in.h>
 
 
 enum { SUCCESS = 0, FAILURE = -1 };
