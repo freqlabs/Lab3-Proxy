@@ -1,6 +1,8 @@
 #include "proxy.h"
 
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <err.h>
