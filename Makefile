@@ -1,4 +1,4 @@
-CFLAGS = -g -Isrc -Wall -Werror
+CFLAGS = -g -std=c11 -Isrc -Wall -Werror
 
 srcs = $(wildcard src/*.c)
 objs = $(srcs:.c=.o)
