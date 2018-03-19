@@ -13,12 +13,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
 #define LISTEN_BACKLOG 8 // FIXME: what is a good value for this?
+#define RECV_BUFLEN 2048 // FIXME: ^
 
 struct proxy {
     int sockfd;
@@ -83,10 +85,52 @@ proxy_cleanup(struct proxy *proxy)
     close(proxy->sockfd);
 }
 
+/*
+ * Process a client request.
+ * Returns true to indicate proxy_request() should be called again,
+ * or false to indicate the connection has been closed.
+ * Exits on error.
+ */
+static bool
+proxy_request(struct proxy *proxy)
+{
+    char buf[RECV_BUFLEN];
+    ssize_t len;
+
+    len = recv(proxy->sockfd, buf, RECV_BUFLEN, 0);
+    switch (len) {
+    case -1:
+        perror("proxy_main(): recv() from client failed");
+        close(proxy->sockfd);
+        exit(EXIT_FAILURE);
+    case 0:
+        if (proxy->verbose)
+            printf("connection closed by client %s:%d\n",
+                   inet_ntoa(proxy->client.sin_addr),
+                   ntohs(proxy->client.sin_port));
+        return false;
+    default:
+        // TODO: proxy HTTP traffic to the server specified in the Host header
+        // TODO: set socket options according to headers (keepalive, etc)?
+        printf("%*s", (int)len, buf);
+
+        return true;
+    }
+}
+
 static int
 proxy_main(struct proxy *proxy)
 {
-    puts("proxy main"); // TODO
+    if (proxy->verbose)
+        printf("proxying HTTP for client %s:%d\n",
+               inet_ntoa(proxy->client.sin_addr),
+               ntohs(proxy->client.sin_port));
+
+
+    while (proxy_request(proxy))
+        ;
+
+    close(proxy->sockfd);
 
     return EXIT_SUCCESS;
 }
