@@ -100,7 +100,7 @@ proxy_request(struct proxy *proxy)
     len = recv(proxy->sockfd, buf, RECV_BUFLEN, 0);
     switch (len) {
     case -1:
-        perror("proxy_main(): recv() from client failed");
+        perror("proxy_request(): recv() from client failed");
         close(proxy->sockfd);
         exit(EXIT_FAILURE);
     case 0:
