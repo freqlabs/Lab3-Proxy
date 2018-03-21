@@ -16,11 +16,13 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include "http.h"
+
 
 enum { SUCCESS = 0, FAILURE = -1 };
 
 #define LISTEN_BACKLOG 8 // FIXME: what is a good value for this?
-#define RECV_BUFLEN 2048 // FIXME: ^
+#define RECV_BUFLEN (REQUEST_LINE_MIN_BUFLEN*2)
 
 struct proxy {
     int sockfd;
@@ -112,7 +114,7 @@ proxy_request(struct proxy *proxy)
     default:
         // TODO: proxy HTTP traffic to the server specified in the Host header
         // TODO: set socket options according to headers (keepalive, etc)?
-        printf("%*s", (int)len, buf);
+        debug_http_request_line(parse_http_request_line(buf, len));
 
         return true;
     }
