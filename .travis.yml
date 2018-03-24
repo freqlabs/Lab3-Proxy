@@ -1,5 +1,5 @@
 language: c
-compiler: gcc-4.9
+compiler: gcc-5
 
 sudo: false
 dist: trusty
@@ -10,6 +10,6 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - libhttp-parser-dev
-      - gcc-4.9
+      - gcc-5
 
 script: make
