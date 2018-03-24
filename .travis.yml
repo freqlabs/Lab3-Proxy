@@ -1,5 +1,5 @@
 language: c
 before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libhttp-parser-dev
+  - git clone https://github.com/nodejs/http-parser.git
+  - pushd http-parser && make && sudo make install && popd
 script: make
