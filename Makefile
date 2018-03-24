@@ -5,9 +5,12 @@ LIBS = -lhttp_parser
 srcs = $(wildcard src/*.c)
 objs = $(srcs:.c=.o)
 
-proxy: $(objs)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(LIBS) -o $@ $^
+all: proxy
 
-.PHONY: clean
+proxy: $(objs)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
+
 clean:
 	rm -rf $(objs) proxy
+
+.PHONY: all clean
