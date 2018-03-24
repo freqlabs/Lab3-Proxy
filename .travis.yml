@@ -1,5 +1,5 @@
 language: c
 before_install:
   - git clone https://github.com/nodejs/http-parser.git
-  - pushd http-parser && make && sudo make install && popd
+  - pushd http-parser && make library && sudo make install && popd
 script: make
