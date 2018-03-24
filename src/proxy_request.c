@@ -21,6 +21,10 @@
 #include "byte_string.h"
 
 
+#ifndef http_parser_url_init
+#define http_parser_url_init(u) memset((u), 0, sizeof (struct http_parser_url))
+#endif
+
 enum state {
     s_init, s_url, s_header_field, s_header_value, s_body, s_error
 };
