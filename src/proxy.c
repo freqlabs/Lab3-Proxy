@@ -1,7 +1,7 @@
 #include "proxy.h"
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #include <assert.h>
@@ -11,24 +11,15 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include "http.h"
+#include "proxy_priv.h"
+#include "proxy_request.h"
 
-
-enum { SUCCESS = 0, FAILURE = -1 };
-
-#define LISTEN_BACKLOG 8 // FIXME: what is a good value for this?
-#define RECV_BUFLEN (REQUEST_LINE_MIN_BUFLEN*2)
-
-struct proxy {
-    int sockfd;
-    bool verbose;
-    struct sockaddr_in client;
-};
 
 /*
  * Initialize a proxy data structure and start listening.
@@ -36,7 +27,7 @@ struct proxy {
 static int
 proxy_start(struct proxy *proxy, uint16_t port, bool verbose)
 {
-    int fd;
+    int fd, val;
     struct sockaddr_in sa = {};
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -45,7 +36,12 @@ proxy_start(struct proxy *proxy, uint16_t port, bool verbose)
         return FAILURE;
     }
 
-    // TODO: set socket options (keepalive, ndelay, etc)?
+    val = true;
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof val) == FAILURE) {
+        perror("proxy_start(): failed to set socket option SO_REUSEADDR");
+        return FAILURE;
+    }
+    // TODO: set other socket options (keepalive, ndelay, etc)?
 
     sa.sin_family = AF_INET;
     sa.sin_addr.s_addr = INADDR_ANY;
@@ -85,39 +81,6 @@ proxy_cleanup(struct proxy *proxy)
         puts("closing the listening socket");
 
     close(proxy->sockfd);
-}
-
-/*
- * Process a client request.
- * Returns true to indicate proxy_request() should be called again,
- * or false to indicate the connection has been closed.
- * Exits on error.
- */
-static bool
-proxy_request(struct proxy *proxy)
-{
-    char buf[RECV_BUFLEN];
-    ssize_t len;
-
-    len = recv(proxy->sockfd, buf, RECV_BUFLEN, 0);
-    switch (len) {
-    case -1:
-        perror("proxy_request(): recv() from client failed");
-        close(proxy->sockfd);
-        exit(EXIT_FAILURE);
-    case 0:
-        if (proxy->verbose)
-            printf("connection closed by client %s:%d\n",
-                   inet_ntoa(proxy->client.sin_addr),
-                   ntohs(proxy->client.sin_port));
-        return false;
-    default:
-        // TODO: proxy HTTP traffic to the server specified in the Host header
-        // TODO: set socket options according to headers (keepalive, etc)?
-        debug_http_request_line(parse_http_request_line(buf, len));
-
-        return true;
-    }
 }
 
 static int
